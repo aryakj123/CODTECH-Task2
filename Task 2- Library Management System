@@ -1,0 +1,132 @@
+import datetime
+
+class LibraryItem:
+    def __init__(self, item_id, title, author, category, copies):
+        self.item_id = item_id
+        self.title = title
+        self.author = author
+        self.category = category
+        self.copies = copies
+        self.borrowed_items = {}
+
+    def check_out(self, user_id):
+        if self.copies > 0:
+            self.copies -= 1
+            self.borrowed_items[user_id] = datetime.datetime.now()
+            return True
+        return False
+
+    def return_item(self, user_id):
+        if user_id in self.borrowed_items:
+            borrow_date = self.borrowed_items.pop(user_id)
+            self.copies += 1
+            overdue_days = (datetime.datetime.now() - borrow_date).days - 14
+            fine = max(0, overdue_days * 1)  # $1 fine per day after 14 days
+            return fine
+        return None
+
+class Library:
+    def __init__(self):
+        self.items = {}
+
+    def add_item(self, item_id, title, author, category, copies):
+        if item_id not in self.items:
+            self.items[item_id] = LibraryItem(item_id, title, author, category, copies)
+            print(f"Item '{title}' added successfully!")
+        else:
+            print("Item ID already exists.")
+
+    def search_item(self, query, field):
+        results = []
+        for item in self.items.values():
+            if field == "title" and query.lower() in item.title.lower():
+                results.append(item)
+            elif field == "author" and query.lower() in item.author.lower():
+                results.append(item)
+            elif field == "category" and query.lower() in item.category.lower():
+                results.append(item)
+        return results
+
+    def check_out_item(self, item_id, user_id):
+        if item_id in self.items:
+            success = self.items[item_id].check_out(user_id)
+            if success:
+                print("Item checked out successfully.")
+            else:
+                print("No copies available for checkout.")
+        else:
+            print("Item ID not found.")
+
+    def return_item(self, item_id, user_id):
+        if item_id in self.items:
+            fine = self.items[item_id].return_item(user_id)
+            if fine is not None:
+                if fine > 0:
+                    print(f"Item returned successfully. Overdue fine: ${fine}")
+                else:
+                    print("Item returned successfully. No overdue fine.")
+            else:
+                print("This user did not borrow this item.")
+        else:
+            print("Item ID not found.")
+
+    def generate_report(self):
+        print("\n--- Library Report ---")
+        for item in self.items.values():
+            print(f"ID: {item.item_id}, Title: {item.title}, Author: {item.author}, Category: {item.category}, Copies Available: {item.copies}")
+
+if __name__ == "__main__":
+    library = Library()
+
+    while True:
+        print("\nLibrary Management System")
+        print("1. Add Item")
+        print("2. Search Item")
+        print("3. Check Out Item")
+        print("4. Return Item")
+        print("5. Generate Report")
+        print("6. Exit")
+
+        choice = input("Enter your choice: ")
+
+        if choice == "1":
+            item_id = input("Enter item ID: ")
+            title = input("Enter title: ")
+            author = input("Enter author: ")
+            category = input("Enter category: ")
+            try:
+                copies = int(input("Enter number of copies: "))
+                library.add_item(item_id, title, author, category, copies)
+            except ValueError:
+                print("Invalid input for copies. Must be an integer.")
+
+        elif choice == "2":
+            query = input("Enter search query: ")
+            field = input("Search by (title/author/category): ").lower()
+            results = library.search_item(query, field)
+            if results:
+                print("\nSearch Results:")
+                for item in results:
+                    print(f"ID: {item.item_id}, Title: {item.title}, Author: {item.author}, Category: {item.category}, Copies Available: {item.copies}")
+            else:
+                print("No items found.")
+
+        elif choice == "3":
+            item_id = input("Enter item ID: ")
+            user_id = input("Enter user ID: ")
+            library.check_out_item(item_id, user_id)
+
+        elif choice == "4":
+            item_id = input("Enter item ID: ")
+            user_id = input("Enter user ID: ")
+            library.return_item(item_id, user_id)
+
+        elif choice == "5":
+            library.generate_report()
+
+        elif choice == "6":
+            print("Exiting the system. Goodbye!")
+            break
+
+        else:
+            print("Invalid choice. Please try again.")
